@@ -15,7 +15,7 @@ import { Themable, NOTIFICATIONS_TOAST_BORDER, NOTIFICATIONS_BACKGROUND } from '
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { widgetShadow } from 'vs/platform/theme/common/colorRegistry';
 import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
-import { NotificationsToastsVisibleContext } from 'vs/workbench/browser/parts/notifications/notificationsCommands';
+import { NotificationsToastsVisibleContext, INotificationsToastController } from 'vs/workbench/browser/parts/notifications/notificationsCommands';
 import { IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { localize } from 'vs/nls';
 import { Severity, NotificationsFilter } from 'vs/platform/notification/common/notification';
@@ -39,7 +39,7 @@ enum ToastVisibility {
 	VISIBLE
 }
 
-export class NotificationsToasts extends Themable {
+export class NotificationsToasts extends Themable implements INotificationsToastController {
 
 	private static readonly MAX_WIDTH = 450;
 	private static readonly MAX_NOTIFICATIONS = 3;
@@ -90,11 +90,11 @@ export class NotificationsToasts extends Themable {
 			this.model.notifications.forEach(notification => this.addToast(notification));
 
 			// Update toasts on notification changes
-			this._register(this.model.onDidNotificationChange(e => this.onDidNotificationChange(e)));
+			this._register(this.model.onDidChangeNotification(e => this.onDidChangeNotification(e)));
 		});
 
 		// Filter
-		this._register(this.model.onDidFilterChange(filter => {
+		this._register(this.model.onDidChangeFilter(filter => {
 			if (filter === NotificationsFilter.SILENT || filter === NotificationsFilter.ERROR) {
 				this.hide();
 			}
@@ -114,7 +114,7 @@ export class NotificationsToasts extends Themable {
 		]);
 	}
 
-	private onDidNotificationChange(e: INotificationChangeEvent): void {
+	private onDidChangeNotification(e: INotificationChangeEvent): void {
 		switch (e.kind) {
 			case NotificationChangeType.ADD:
 				return this.addToast(e.item);
@@ -194,12 +194,12 @@ export class NotificationsToasts extends Themable {
 		this.layoutContainer(maxDimensions.height);
 
 		// Update when item height changes due to expansion
-		itemDisposables.add(item.onDidExpansionChange(() => {
+		itemDisposables.add(item.onDidChangeExpansion(() => {
 			notificationList.updateNotificationsList(0, 1, [item]);
 		}));
 
 		// Update when item height potentially changes due to label changes
-		itemDisposables.add(item.onDidLabelChange(e => {
+		itemDisposables.add(item.onDidChangeLabel(e => {
 			if (!item.expanded) {
 				return; // dynamic height only applies to expanded notifications
 			}

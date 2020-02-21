@@ -34,11 +34,11 @@ export class NotificationsStatus extends Disposable {
 	}
 
 	private registerListeners(): void {
-		this._register(this.model.onDidNotificationChange(e => this.onDidNotificationChange(e)));
-		this._register(this.model.onDidStatusMessageChange(e => this.onDidStatusMessageChange(e)));
+		this._register(this.model.onDidChangeNotification(e => this.onDidChangeNotification(e)));
+		this._register(this.model.onDidChangeStatusMessage(e => this.onDidChangeStatusMessage(e)));
 	}
 
-	private onDidNotificationChange(e: INotificationChangeEvent): void {
+	private onDidChangeNotification(e: INotificationChangeEvent): void {
 		if (this.isNotificationsCenterVisible) {
 			return; // no change if notification center is visible
 		}
@@ -58,14 +58,20 @@ export class NotificationsStatus extends Disposable {
 
 	private updateNotificationsCenterStatusItem(): void {
 		const statusProperties: IStatusbarEntry = {
-			text: this.currentNotifications.size === 0 ? '$(bell)' : `$(bell) ${this.currentNotifications.size}`,
+			text: this.currentNotifications.size === 0 ? '$(bell)' : '$(bell-dot)',
 			command: this.isNotificationsCenterVisible ? HIDE_NOTIFICATIONS_CENTER : SHOW_NOTIFICATIONS_CENTER,
 			tooltip: this.getTooltip(),
 			showBeak: this.isNotificationsCenterVisible
 		};
 
 		if (!this.notificationsCenterStatusItem) {
-			this.notificationsCenterStatusItem = this.statusbarService.addEntry(statusProperties, 'status.notifications', localize('status.notifications', "Notifications"), StatusbarAlignment.RIGHT, -Number.MAX_VALUE /* towards the far end of the right hand side */);
+			this.notificationsCenterStatusItem = this.statusbarService.addEntry(
+				statusProperties,
+				'status.notifications',
+				localize('status.notifications', "Notifications"),
+				StatusbarAlignment.RIGHT,
+				-Number.MAX_VALUE /* towards the far end of the right hand side */
+			);
 		} else {
 			this.notificationsCenterStatusItem.update(statusProperties);
 		}
@@ -101,7 +107,7 @@ export class NotificationsStatus extends Disposable {
 		}
 	}
 
-	private onDidStatusMessageChange(e: IStatusMessageChangeEvent): void {
+	private onDidChangeStatusMessage(e: IStatusMessageChangeEvent): void {
 		const statusItem = e.item;
 
 		switch (e.kind) {
